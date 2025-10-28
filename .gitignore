@@ -7,3 +7,5 @@ Bulk_Import/bulk_order.log  # Log files.env
 logs/ 
 .env
 dockerRun.bat
+sshketgit
+sshketgit.pub
