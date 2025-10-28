@@ -809,12 +809,14 @@ if 'initialized' not in st.session_state:
     st.session_state.tax_data = {}
     st.session_state.tax_lis = {}
     st.session_state.bulk_lis = []
+    st.session_state.count_lis = []
     st.session_state.initialized = True
 
 if 'order_menu' not in st.session_state:
     st.session_state.order_menu = {}
     st.session_state.stock_rec = {}
     st.session_state.tax_data = {}
+    st.session_state.count_lis = []
     st.session_state.tax_lis = {}  # For item-specific tax categories
 
 # --- Main App ---
@@ -1094,8 +1096,9 @@ elif portal == "Corporate (Admin)":
         st.warning("User Name empty - Corporate access denied!")
         st.stop()
     st.sidebar.success(f"Welcome, {username}!")
-    if len(username) > 0:
+    if len(username) > 0 and len(st.session_state.count_lis) == 0:
         welcome_alert(username)
+        st.session_state.count_lis.append(1)
     st.header("⚙️ Corporate Portal: Admin Dashboard")
     tab_admin1, tab_admin2, tab_admin3,tab_admin4 = st.tabs(["Maintenance", "Graphs & Reports", "Dynamic Reports", "Bulk Orders"])
     with tab_admin1:
@@ -1737,6 +1740,8 @@ elif portal == "Corporate (Admin)":
             
                 st.title("Bulk menu Reader")
                 fname = open(file_path,"w")
+
+                st.warning("Upload Xcel file with 2 columns Item name & Quantity")
 
                 uploaded_file = st.file_uploader("Upload the Order File", type=["xlsx", "xls"])
                 print(f"Order file: {uploaded_file}\n",file=fp)
