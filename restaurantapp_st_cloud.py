@@ -1080,7 +1080,7 @@ elif portal == "Corporate (Admin)":
     - **Do NOT edit data** (e.g., stock, prices, taxes)—changes are simulated or may affect shared demo data.  
     - View features only: Explore reports, graphs, and maintenance tools.  
     - For real use, contact the developer or use a private instance.  
-    Questions? Check the GitHub repo: [unixanand/restaurant-app](https://github.com/unixanand/restaurant-app).
+    Questions? Check the GitHub repo: [unixanand/restaurant-app-stcloud](https://github.com/unixanand/restaurant-app-stcloud).
     """)
     user_file = "./Files/user_list.txt"
     if os.path.exists(user_file):
