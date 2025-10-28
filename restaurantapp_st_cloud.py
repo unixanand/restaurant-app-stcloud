@@ -683,6 +683,40 @@ def get_item_price(connection,item,qty) :
     return price, tax_amt
 
 ##
+def welcome_alert(username):
+    # Email setup
+    msg = MIMEMultipart('alternative')
+    msg['From'] = EMAIL_USER
+    msg['To'] = ALERT_RECIPIENT
+    msg['Subject'] = f"🚨 New user logged in - {username}!"
+    
+    html_body = f"""
+    <html>
+    <body>
+        <h2>New user logged in</h2>
+        <p>Date: {datetime.now(pytz.timezone("Asia/Kolkata")).strftime("%Y-%m-%d %H:%M:%S")}</p>
+    </body>
+    </html>
+    """
+    msg.attach(MIMEText(html_body, 'html'))
+    
+    try:
+        if SEND_ALERTS:
+            server = smtplib.SMTP(SMTP_HOST, SMTP_PORT)
+            server.starttls()
+            server.login(EMAIL_USER, EMAIL_PASS)
+            text = server.send_message(msg)
+            server.quit()
+            st.success(f"Alert sent for new login!")
+        else:
+            st.info(f"Demo: Would send alert for new user login")
+        
+    except Exception as e:
+        st.error(f"Email alert failed: {e}")
+        logging.error(f"user login alert failure: {e}")
+##
+
+    
 def send_stock_alert(connection, item_name, new_stock):
     """Send email alert if stock is low/zero."""
     if new_stock > 0:  # Customize threshold here (e.g., > 5)
@@ -1054,12 +1088,14 @@ elif portal == "Corporate (Admin)":
             allowed = set(line.strip() for line in f)
     else:
         allowed = set()  # Or default users
-    username = st.sidebar.text_input("Enter Username to login Admin Portal", type="password")
+    username = st.sidebar.text_input("Enter your name/email Id", type="password")
     st.sidebar.button("Ok")
-    #if username not in allowed:
-        #st.warning("Invalid user - Corporate access denied!")
-        #st.stop()
+    if len(username) == 0:
+        st.warning("User Name empty - Corporate access denied!")
+        st.stop()
     st.sidebar.success(f"Welcome, {username}!")
+    if len(username) > 0:
+        welcome_alert(username)
     st.header("⚙️ Corporate Portal: Admin Dashboard")
     tab_admin1, tab_admin2, tab_admin3,tab_admin4 = st.tabs(["Maintenance", "Graphs & Reports", "Dynamic Reports", "Bulk Orders"])
     with tab_admin1:
@@ -1437,7 +1473,7 @@ elif portal == "Corporate (Admin)":
                         ax.bar(x + offset, sale_amt[week_idx], bar_width, label=week, color=colors[week_idx])
 
                     ax.set_xlabel('Item Type')
-                    ax.set_ylabel('Sales Amount')
+                    ax.set_ylabel('Sales Quantity')
                     ax.set_title('Item Sales by Week')
                     ax.set_xticks(x)
                     ax.set_xticklabels(item_types, rotation=45, ha='right')
@@ -1475,7 +1511,7 @@ elif portal == "Corporate (Admin)":
                         ax.bar(x + offset, sale_amt[week_idx], bar_width, label=week, color=colors[week_idx])
 
                     ax.set_xlabel('Item Type')
-                    ax.set_ylabel('Sales Quantity')
+                    ax.set_ylabel('Sales Amount')
                     ax.set_title('Item Sales by Week')
                     ax.set_xticks(x)
                     ax.set_xticklabels(item_types, rotation=45, ha='right')
