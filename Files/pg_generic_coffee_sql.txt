@@ -1,0 +1,10 @@
+SELECT value_date AS value_date, item_name, quantity, sales_amt 
+FROM sales_dtl_tbl
+WHERE item_name IN (
+    SELECT coffee_name 
+    FROM coffee_menu_tbl 
+    WHERE delete_flag = 'N'
+)
+AND value_date >= %(date_start)s 
+AND value_date <= %(date_end)s 
+ORDER BY 1, 2

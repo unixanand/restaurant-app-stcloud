@@ -1,0 +1,5 @@
+1, Latte, 100
+2, Filter Coffee, 90
+3, Espresso,120
+4, Cold Coffee,150
+5, Black Coffee, 85

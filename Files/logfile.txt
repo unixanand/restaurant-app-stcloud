@@ -1,0 +1,7 @@
+timestamp,level,message
+2025-08-06 10:00:00,INFO,System started
+2025-08-06 10:01:00,ERROR,Connection failed
+2025-08-06 10:02:00,WARN,Low memory
+2025-08-06 10:03:00,ERROR,Timeout occurred
+2025-08-06 10:03:00,ORA ERR,Data Error
+2025-08-06 10:03:00,Primary key violation,error key

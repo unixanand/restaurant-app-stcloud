@@ -1,0 +1,3 @@
+SELECT value_date as value_date,item_name,quantity,sales_amt FROM sales_dtl_tbl
+WHERE item_name in (select item_name from SPECIAL_SNACKS_TBL where delete_flag='N')
+AND value_date >= %(date_start)s AND value_date <= %(date_end)s order by 1,2

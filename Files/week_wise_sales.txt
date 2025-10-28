@@ -1,0 +1,21 @@
+select 'week'||WeekNo WeekNo, category,item_name, Tot_quantity, Tot_Sales from (
+SELECT FLOOR((TRUNC(value_date) - TRUNC(value_date, 'MM')) / 7) + 1 as WeekNo,'Coffee' category,item_name,sum(quantity) Tot_quantity, sum(sales_amt) Tot_Sales
+from SALES_DTL_TBL where item_name in (select coffee_name from coffee_menu_tbl) and value_date = trim(value_date)
+and TRUNC(value_date, 'MM') = TRUNC(sysdate, 'MM')
+group by WeekNo, item_name, category
+union
+SELECT FLOOR((TRUNC(value_date) - TRUNC(value_date, 'MM')) / 7) + 1 as WeekNo,'Tea' category,  item_name,sum(quantity) Tot_quantity, sum(sales_amt) Tot_Sales
+from SALES_DTL_TBL where item_name in (select tea_name from tea_menu_tbl) and value_date = trim(value_date)
+and TRUNC(value_date, 'MM') = TRUNC(sysdate, 'MM')
+group by WeekNo, item_name, category
+union
+SELECT FLOOR((TRUNC(value_date) - TRUNC(value_date, 'MM')) / 7) + 1 as WeekNo,'Chat' category, item_name,sum(quantity) Tot_quantity, sum(sales_amt) Tot_Sales
+from SALES_DTL_TBL where item_name in (select chat_name from chat_menu_tbl) and value_date = trim(value_date)
+and TRUNC(value_date, 'MM') = TRUNC(sysdate, 'MM')
+group by WeekNo, item_name, category 
+union
+SELECT FLOOR((TRUNC(value_date) - TRUNC(value_date, 'MM')) / 7) + 1 as WeekNo,'Snacks' category, item_name,sum(quantity) Tot_quantity, sum(sales_amt) Tot_Sales
+from SALES_DTL_TBL where item_name in (select item_name from SPECIAL_SNACKS_TBL) and value_date = trim(value_date)
+and TRUNC(value_date, 'MM') = TRUNC(sysdate, 'MM')
+group by WeekNo, item_name, category )
+order by 1,2, 3

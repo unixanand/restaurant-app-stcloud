@@ -1,0 +1,6 @@
+3)2025-08-06 10:01:00,ERROR,Connection failed
+5)2025-08-06 10:03:00,ERROR,Timeout occurred
+6)2025-08-06 10:03:00,ORA ERR,Data Error
+7)2025-08-06 10:03:00,Primary key violation,error key
+8)2025-08-06 10:03:00,Composite key overflow,warning key
+

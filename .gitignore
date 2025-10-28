@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+Files/db_prop.txt  # Sensitive DB credentials
+*.log
+reports/*.xlsx  # Generated Excel reports
+Bulk_Import/bulk_order.log  # Log files.env 
+logs/ 
+.env
+dockerRun.bat

@@ -1,0 +1,35 @@
+			 Total Coffee sales/Flavour for the month of   Aug -   2025
+		======================================================================
+		 Week		 Flavour 			      Tot. Quantity
+		~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		 week1           Black Coffee              			   2
+		  		 Cold Coffee            			   6
+		  		 Espresso               			   2
+		  		 Filter Coffee          			   1
+		  		 Latte                  			   5
+		~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		 week2           Cold Coffee               			   7
+		  		 Espresso               			   10
+		  		 Filter Coffee          			   75
+		  		 Latte                  			   87
+		~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		 week3           Black Coffee              			   123
+		  		 Cold Coffee            			   45
+		  		 Espresso               			   52
+		  		 Filter Coffee          			   62
+		  		 Latte                  			   13
+		~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		 week4           Black Coffee              			   106
+		  		 Cold Coffee            			   16
+		  		 Espresso               			   22
+		  		 Filter Coffee          			   22
+		  		 Latte                  			   39
+		  		 Vanilla Cream          			   9
+		~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		 week5           Black Coffee              			   2
+		  		 Cold Coffee            			   10
+		  		 Espresso               			   6
+		  		 Filter Coffee          			   4
+		  		 Latte                  			   4
+		  		 Vanilla Cream          			   4
+		======================================================================

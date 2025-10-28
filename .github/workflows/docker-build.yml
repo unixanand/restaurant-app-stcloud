@@ -1,0 +1,23 @@
+name: CI Pipeline
+on:
+  push:
+    branches: [ "*" ]
+  pull_request:
+    branches: [ "main" ]
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Build Docker image
+        run: docker build --no-cache -t restaurant-app . --progress=plain
+      - name: Run linter
+        run: docker run restaurant-app flake8 .
+      - name: Run tests
+        run: docker run restaurant-app pytest --cov=. --cov-report=xml
+      - name: Upload coverage report
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage.xml
+          fail_ci_if_error: true

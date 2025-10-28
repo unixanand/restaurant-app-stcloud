@@ -1,0 +1,19 @@
+select 'week'||WeekNo WeekNo, category,item_name, Tot_quantity, Tot_Sales from (
+SELECT FLOOR( EXTRACT(DAY FROM (value_date - DATE_TRUNC('month', value_date))) / 7 ) + 1 AS WeekNo,'Coffee' AS category,item_name,SUM(quantity) AS Tot_quantity, SUM(sales_amt) AS Tot_Sales FROM SALES_DTL_TBL WHERE item_name IN (SELECT coffee_name FROM coffee_menu_tbl)
+AND DATE_TRUNC('month', value_date) = DATE_TRUNC('month', CURRENT_DATE)
+GROUP BY WeekNo,item_name,category
+union
+SELECT FLOOR( EXTRACT(DAY FROM (value_date - DATE_TRUNC('month', value_date))) / 7 ) + 1 AS WeekNo,'Tea' AS category,item_name,SUM(quantity) AS Tot_quantity,  sum(sales_amt) Tot_Sales from SALES_DTL_TBL where item_name in (select tea_name from tea_menu_tbl) 
+AND DATE_TRUNC('month', value_date) = DATE_TRUNC('month', CURRENT_DATE)
+group by WeekNo, item_name, category
+union
+SELECT FLOOR( EXTRACT(DAY FROM (value_date - DATE_TRUNC('month', value_date))) / 7 ) + 1 AS WeekNo,'Chat' AS category,item_name,SUM(quantity) AS Tot_quantity,  sum(sales_amt) Tot_Sales from SALES_DTL_TBL where item_name in (select chat_name from chat_menu_tbl) 
+AND DATE_TRUNC('month', value_date) = DATE_TRUNC('month', CURRENT_DATE)
+group by WeekNo, item_name, category 
+union
+SELECT FLOOR( EXTRACT(DAY FROM (value_date - DATE_TRUNC('month', value_date))) / 7 ) + 1 AS WeekNo,'Snacks' AS category,item_name,SUM(quantity) AS Tot_quantity,  sum(sales_amt) Tot_Sales from SALES_DTL_TBL where item_name in (select item_name from SPECIAL_SNACKS_TBL) 
+AND DATE_TRUNC('month', value_date) = DATE_TRUNC('month', CURRENT_DATE)
+group by WeekNo, item_name, category )
+order by 1,2, 3
+
+

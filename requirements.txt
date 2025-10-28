@@ -1,0 +1,11 @@
+streamlit==1.39.0
+pandas==2.2.3
+numpy==2.1.2
+matplotlib==3.9.2
+pytz==2024.2
+openpyxl==3.1.5
+python-dotenv==1.0.1
+pytest==8.3.3
+flake8
+pytest-cov
+psycopg[binary]==3.2.11

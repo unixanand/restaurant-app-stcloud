@@ -1,0 +1,3 @@
+timestamp,level,message
+2025-08-06 10:03:00,ORA ERROR,Data Error
+2025-08-06 10:03:00,Primary key violation,error key

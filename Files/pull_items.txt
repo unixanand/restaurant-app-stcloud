@@ -1,0 +1,21 @@
+select day, itemName, tot_sales from (
+select substr(TO_CHAR(value_date, 'DD_Day'),1,6) day,'Coffee' itemName, sum(sales_amt) tot_sales from SALES_DTL_TBL
+where value_date >=:week_start_date
+and item_name in (select coffee_name from coffee_menu_tbl)
+group by value_date
+union
+select substr(TO_CHAR(value_date, 'DD_Day'),1,6) day,'Tea' itemName, sum(sales_amt) tot_sales from SALES_DTL_TBL
+where value_date >=:week_start_date
+and item_name in (select tea_name from tea_menu_tbl)
+group by value_date
+union
+select substr(TO_CHAR(value_date, 'DD_Day'),1,6) day, 'Chat' ItemName, sum(sales_amt) tot_sales from SALES_DTL_TBL
+where value_date >=:week_start_date
+and item_name in (select chat_name from chat_menu_tbl)
+group by value_date
+union
+select substr(TO_CHAR(value_date, 'DD_Day'),1,6) day,'Snacks' itemName, sum(sales_amt) tot_sales from SALES_DTL_TBL
+where value_date >=:week_start_date
+and item_name in (select item_name from SPECIAL_SNACKS_TBL)
+group by value_date )
+order by 1,2
