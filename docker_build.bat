@@ -1,0 +1,1 @@
+docker build --no-cache -t restaurantapp_st_cloud-app . --progress=plain
