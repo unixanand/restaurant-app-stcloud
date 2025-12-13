@@ -10,3 +10,4 @@ flake8
 pytest-cov
 psycopg[binary]==3.2.11
 sendgrid
+email-validator
