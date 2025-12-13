@@ -38,6 +38,8 @@ EMAIL_USER = os.environ.get('EMAIL_USER')
 EMAIL_PASS = os.environ.get('EMAIL_PASS')
 ALERT_RECIPIENT = os.environ.get('ALERT_RECIPIENT', EMAIL_USER)  # Default to sender
 SEND_ALERTS = os.environ.get('SEND_ALERTS', 'true').lower() == 'true'
+EMAIL_FROM = os.environ.get('EMAIL_FROM')
+SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY')
 
 @st.cache_resource
 def get_connection():
@@ -683,7 +685,37 @@ def get_item_price(connection,item,qty) :
     return price, tax_amt
 
 ##
+##
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
+import logging
+from datetime import datetime
+import pytz
+
 def welcome_alert(username):
+    if SEND_ALERTS:
+        message = Mail(
+            from_email= EMAIL_FROM,
+            to_emails= ALERT_RECIPIENT,
+            subject=f"🚨 New user logged in - {username}!",
+            html_content=f"""
+            <html>
+            <body>
+                <h2>New user logged in: {username}</h2>
+                <p>Date: {datetime.now(pytz.timezone("Asia/Kolkata")).strftime("%Y-%m-%d %H:%M:%S")}</p>
+            </body>
+            </html>
+            """
+        )
+        try:
+            sg = SendGridAPIClient(SENDGRID_API_KEY)
+            response = sg.send(message)
+            logging.info(f"SendGrid alert sent for {username} - Status: {response.status_code}")
+        except Exception as e:
+            logging.error(f"SendGrid failed for {username}: {e}")
+
+##
+def welcome_alert_old(username):
     # Email setup
     msg = MIMEMultipart('alternative')
     msg['From'] = EMAIL_USER
@@ -1875,5 +1907,10 @@ elif portal == "Corporate (Admin)":
 
 
 # Footer
-st.sidebar.markdown("---")
-st.sidebar.info("Dashboard powered by Streamlit + PostgreSQL")
+st.sidebar.markdown(
+    """
+    **Powered by:**
+    - [Streamlit](https://streamlit.io)
+    - [Supabase](https://supabase.com) (PostgreSQL + BaaS)
+    """
+)
