@@ -1,0 +1,79 @@
+# .github/workflows/deploy-to-ecs.yml
+
+name: Deploy Streamlit App to ECS Fargate
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:  # Allows manual trigger
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      # 1. Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Configure AWS credentials (uses OIDC — no secrets needed!)
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_GITHUB_OIDC_ROLE_ARN }}
+          role-session-name: github-actions-${{ github.run_id }}
+
+      # 3. Login to Amazon ECR
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # 4. Extract metadata (tags, labels)
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.login-ecr.outputs.registry }}/restaurant-streamlit
+          tags: |
+            type=sha,prefix=sha-,format=long
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      # 5. Build, tag, and push Docker image
+      - name: Build, tag, and push image to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ steps.meta.outputs.tags }}
+        run: |
+          docker build -t $ECR_REGISTRY/restaurant-streamlit:${{ github.sha }} .
+          docker tag $ECR_REGISTRY/restaurant-streamlit:${{ github.sha }} $ECR_REGISTRY/restaurant-streamlit:latest
+          docker push $ECR_REGISTRY/restaurant-streamlit:${{ github.sha }}
+          docker push $ECR_REGISTRY/restaurant-streamlit:latest
+          echo "image=$ECR_REGISTRY/restaurant-streamlit:${{ github.sha }}" >> $GITHUB_OUTPUT
+
+      # 6. Force new deployment on ECS (zero-downtime rolling update)
+      - name: Deploy to ECS Fargate
+        run: |
+          aws ecs update-service \
+            --cluster restaurant-cluster \
+            --service restaurant-service \
+            --force-new-deployment \
+            --region ${{ secrets.AWS_REGION }}
+
+      # 7. Optional: Wait for service stability + health check
+      - name: Wait for ECS service to stabilize
+        run: |
+          aws ecs wait services-stable \
+            --cluster restaurant-cluster \
+            --services restaurant-service \
+            --region ${{ secrets.AWS_REGION }}
+
+      # 8. Success message
+      - name: Deployment Success
+        run: |
+          echo "Streamlit app deployed successfully!"
+          echo "Live at: https://${{ secrets.DOMAIN_NAME }}"

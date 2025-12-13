@@ -9,3 +9,5 @@ logs/
 dockerRun.bat
 sshketgit
 sshketgit.pub
+OIDC
+secreats/
