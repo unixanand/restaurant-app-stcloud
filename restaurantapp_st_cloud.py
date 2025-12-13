@@ -19,6 +19,8 @@ import sys
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email_validator import validate_email, EmailNotValidError
+
 
 # Define BASE_DIR for consistent file paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -692,16 +694,27 @@ import logging
 from datetime import datetime
 import pytz
 
+def is_valid_email(email: str) -> bool:
+    try:
+        validate_email(email)
+        return True
+    except EmailNotValidError:
+        return False
+
 def welcome_alert(username):
+    #email_receipient = ALERT_RECIPIENT
+    email_receipient = username
+    #email_recipients = [e.strip() for e in email_receipient.split(",") if e.strip()]
+    
     if SEND_ALERTS:
         message = Mail(
             from_email= EMAIL_FROM,
-            to_emails= ALERT_RECIPIENT,
+            to_emails= email_receipient,
             subject=f"🚨 New user logged in - {username}!",
             html_content=f"""
             <html>
             <body>
-                <h2>New user logged in: {username}</h2>
+                <h2>Welcome to our portal: {username}</h2>
                 <p>Date: {datetime.now(pytz.timezone("Asia/Kolkata")).strftime("%Y-%m-%d %H:%M:%S")}</p>
             </body>
             </html>
@@ -1122,12 +1135,17 @@ elif portal == "Corporate (Admin)":
             allowed = set(line.strip() for line in f)
     else:
         allowed = set()  # Or default users
-    username = st.sidebar.text_input("Enter your name/email Id", type="password")
+    username = st.sidebar.text_input("Enter your valid email Id", type="password")
     st.sidebar.button("Ok")
     if len(username) == 0:
         st.warning("User Name empty - Corporate access denied!")
         st.stop()
+    valid_user = is_valid_email(username)
+    if not valid_user:
+        st.warning("Invalid Email-Id - Corporate access denied!")
+        st.stop()
     st.sidebar.success(f"Welcome, {username}!")
+    st.success("📬 Email triggered to your Inbox!")
     if len(username) > 0 and len(st.session_state.count_lis) == 0:
         welcome_alert(username)
         st.session_state.count_lis.append(1)
