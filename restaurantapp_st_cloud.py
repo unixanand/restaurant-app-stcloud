@@ -646,6 +646,17 @@ def update_bulk_header(connection,file,status) :
     connection.commit()
     cursor.close()
 
+@st.dialog("Menu Alert!")
+def show_special_avail_popup():
+    st.success("✅ Special Menu Available!")
+    st.success("Closing window 7 PM.")
+    
+@st.dialog("Menu Alert!")
+def show_special_unavail_popup():
+    st.warning("⛔ Special Menu not Available!")
+    st.warning("Available window 5 - 7 PM.")    
+
+
 def check_bulk_header(connection,file) :
     if len(file) != 0 :
         cursor = connection.cursor()
@@ -726,6 +737,35 @@ def welcome_alert(username):
             logging.info(f"SendGrid alert sent for {username} - Status: {response.status_code}")
         except Exception as e:
             logging.error(f"SendGrid failed for {username}: {e}")
+
+##
+
+def login_alert():
+    #email_receipient = ALERT_RECIPIENT
+    email_receipient = EMAIL_USER
+    #email_recipients = [e.strip() for e in email_receipient.split(",") if e.strip()]
+    
+    if SEND_ALERTS:
+        message = Mail(
+            from_email= EMAIL_FROM,
+            to_emails= email_receipient,
+            subject=f"🚨 New user logged in - {username}!",
+            html_content=f"""
+            <html>
+            <body>
+                <h2>Logged-in user detail: {username}</h2>
+                <p>Date: {datetime.now(pytz.timezone("Asia/Kolkata")).strftime("%Y-%m-%d %H:%M:%S")}</p>
+            </body>
+            </html>
+            """
+        )
+        try:
+            sg = SendGridAPIClient(SENDGRID_API_KEY)
+            response = sg.send(message)
+            logging.info(f"SendGrid alert sent for {username} - Status: {response.status_code}")
+        except Exception as e:
+            logging.error(f"SendGrid failed for {username}: {e}")
+           
 
 ##
 def welcome_alert_old(username):
@@ -898,6 +938,10 @@ if st.sidebar.button("Logout"):
 
 # --- Public Portal ---
 if portal == "Public (Order)":
+    if check_time() == 1:
+        show_special_avail_popup()
+    else:
+        show_special_unavail_popup()
     st.header("🛒 Public Portal: Place Orders")
     tab1, tab2, tab3, tab4, tab_cart, tab_bill = st.tabs(["Coffee", "Tea", "Chat", "Special", "Cart", "Bill"])
     
@@ -1140,6 +1184,7 @@ elif portal == "Corporate (Admin)":
     if len(username) == 0:
         st.warning("User Name empty - Corporate access denied!")
         st.stop()
+    login_alert()
     valid_user = is_valid_email(username)
     if not valid_user:
         st.warning("Invalid Email-Id - Corporate access denied!")
