@@ -1268,8 +1268,8 @@ if portal == "Dashboard (Main)":
         if sales_df.empty:
             st.info("No sales data yet for this month.")
         else:
-            chart_df = sales_df[['sales_amount']]
-            st.bar_chart(chart_df,x='item_name',y='sales_amount',height=400,use_container_width=True)
+            #chart_df = sales_df[['sales_amount']]
+            st.bar_chart(sales_df,x='item_name',y='sales_amount',height=400,use_container_width=True)
             total_sales = sales_df['sales_amount'].sum()
             st.metric("Today's Total Sales", f"₹{total_sales:,.2f}")
     
