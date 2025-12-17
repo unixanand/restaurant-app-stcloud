@@ -953,7 +953,7 @@ def get_current_day_sales(connection):
     
     
     #df['value_date'] = pd.to_datetime(df['value_date'])
-    df = df.set_index('item_name')
+    df = df.set_index('item_name', sort=False)
     
     return df
     
@@ -1261,7 +1261,7 @@ if portal == "Dashboard (Main)":
             st.metric("Total Sales This Week", f"₹{total_sales:,.2f}")
 
         
-        st.write("\n" * 5)
+        st.write("\n" * 10)
         st.markdown("### Today's Sales data")
         sales_df = get_current_day_sales(connection)
             
