@@ -953,7 +953,7 @@ def get_current_day_sales(connection):
     
     
     #df['value_date'] = pd.to_datetime(df['value_date'])
-    df = df.set_index('item_name', sort=False)
+    df = df.sort_values('sales_amount', ascending=False)
     
     return df
     
