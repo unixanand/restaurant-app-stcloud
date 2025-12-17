@@ -170,6 +170,145 @@ def insert_db_data(connection, tmp_lis):
         st.error(f"DB Insert Error: {e}")
     cursor.close()
 
+
+def fetch_coffee(connection):
+    coffee_lis = []
+    
+    cursor = connection.cursor()
+    sel_qry = "select coffee_name from coffee_menu_tbl where delete_flag='N'"
+    cursor.execute(sel_qry)
+    row = cursor.fetchone()
+    while row:
+        coffee_lis.append(row[0])
+        row = cursor.fetchone()
+
+    return coffee_lis
+
+def fetch_tea(connection):
+    tea_lis = []
+    
+    cursor = connection.cursor()
+    sel_qry = "select tea_name from tea_menu_tbl where delete_flag='N'"
+    cursor.execute(sel_qry)
+    row = cursor.fetchone()
+    while row:
+        tea_lis.append(row[0])
+        row = cursor.fetchone()
+
+    return tea_lis
+
+def fetch_chat(connection):
+    chat_lis = []
+    
+    cursor = connection.cursor()
+    sel_qry = "select chat_name from chat_menu_tbl where delete_flag='N'"
+    cursor.execute(sel_qry)
+    row = cursor.fetchone()
+    while row:
+        chat_lis.append(row[0])
+        row = cursor.fetchone()
+
+    return chat_lis
+
+def fetch_weekday_item(connection, cat):
+    item_list = []
+    cursor = connection.cursor()
+    sel_qry = "select  item_name, weekday from weekday_special_tbl where category = %(cat)s and delete_flag='N'"
+    cursor.execute(sel_qry, {"cat" : cat})
+    row = cursor.fetchone()
+    while row:
+        item_list.append([row[0],row[1]])
+        row = cursor.fetchone()
+
+    return item_list
+    
+
+def fetch_weekday(connection):
+    weekday_lis = []
+
+    cursor = connection.cursor()
+    sel_qry = "select weekday from weekdays_tbl"
+    cursor.execute(sel_qry)
+    row = cursor.fetchone()
+    while row:
+        weekday_lis.append(row[0])
+        row = cursor.fetchone()
+
+    return weekday_lis
+
+def load_weekday_data(connection,item_selected,category,day_selected,del_flg):
+    cursor = connection.cursor()
+    ins_qry = "insert into weekday_special_tbl (item_name, category, weekday, delete_flag) values (%s,%s,%s,%s)"
+    cursor.execute(ins_qry, (item_selected,category,day_selected,del_flg))
+    connection.commit()
+    cursor.close()
+
+
+def upd_weekday_data(connection,item_selected,wkday,del_flg):
+    cursor = connection.cursor()
+    upd_qry = "update weekday_special_tbl set delete_flag = %(del_flg)s where item_name = %(item_selected)s  and weekday = %(wkday)s "
+    cursor.execute(upd_qry,{"item_selected" : item_selected, "wkday" : wkday, "del_flg" : del_flg})
+    
+    connection.commit()
+    cursor.close()
+
+def update_weekday_data(connection,item_selected,pwkday,wkday,del_flg):
+    cursor = connection.cursor()
+    upd_qry = "update weekday_special_tbl set delete_flag = %(del_flg)s , weekday = %(wkday)s where item_name = %(item_selected)s and  weekday = %(pwkday)s   "
+    cursor.execute(upd_qry,{"item_selected" : item_selected, "wkday" : wkday,"pwkday" : pwkday, "del_flg" : del_flg})
+    connection.commit()
+    cursor.close()
+    
+def fetch_weekday_spl_df(connection, ctg):
+    cursor = connection.cursor()
+    sel_qry = "select distinct item_name, weekday from weekday_special_tbl where category = %(ctg)s and  delete_flag='N'"
+    cursor.execute(sel_qry, {"ctg" : ctg})
+    rows = cursor.fetchall()
+    df = pd.DataFrame(rows, columns=['Item_name', 'weekday'])
+    cursor.close()
+    return df
+
+def get_today_spl(connection):
+    cursor = connection.cursor()
+    sel_qry = "select distinct item_name, category from weekday_special_tbl where  delete_flag='N' and lower(trim(weekday)) = lower(to_char(current_date, 'FMDay'))"
+    cursor.execute(sel_qry)
+    rows = cursor.fetchall()
+    df = pd.DataFrame(rows, columns=['Item_name','Category'])
+    cursor.close()
+    return df
+
+
+def update_spl_item(connection, ctg):
+    match ctg:
+        case 'Coffee':
+            table_name = "coffee_menu_tbl"
+            item_name = "coffee_name"
+        case 'Tea':
+            table_name = "tea_menu_tbl"
+            item_name = "tea_name"
+        case 'Chat':
+            table_name = "chat_menu_tbl"
+            item_name = "chat_name"
+            
+    cursor = connection.cursor()
+    upd_qry11 = f"update {table_name} set delete_flag='Y' where {item_name} in (select item_name from weekday_special_tbl where category= %(ctg)s  and delete_flag='N'"
+    upd_qry12 = " and upper(trim(weekday)) != upper(trim(to_char(current_date,'day'))))"
+    update_qry1 = upd_qry11+upd_qry12
+    cursor.execute(update_qry1, {"ctg" : ctg})
+    connection.commit()
+    cursor.close()
+
+    cursor = connection.cursor()
+
+    upd_qry21 = f"update {table_name} set delete_flag='N' where {item_name} in (select item_name from weekday_special_tbl where category= %(ctg)s  and delete_flag='N'"
+    upd_qry22 = " and upper(trim(weekday)) = upper(trim(to_char(current_date,'day'))))"
+    update_qry2 = upd_qry21+upd_qry22
+    cursor.execute(update_qry2, {"ctg" : ctg})
+    
+    connection.commit()
+    cursor.close()
+    
+
 def fetch_coffee_df(connection):
     """Fetch available coffee menu."""
     cursor = connection.cursor()
@@ -657,6 +796,42 @@ def show_special_unavail_popup():
     st.warning("Available window 5 - 7 PM.")    
 
 
+def show_today_spl_popup_old(connection):
+    spl_df = get_today_spl(connection)
+
+    if spl_df.empty:
+        st.info(f"No specials available today!")
+    else:
+        st.dataframe(spl_df, use_container_width=True)
+
+from datetime import datetime
+weekday = datetime.now().strftime("%A")
+
+@st.dialog(f"{weekday}'s Special!")
+def show_today_spl_popup(connection):
+    spl_df = get_today_spl(connection)
+    
+    if spl_df.empty:
+        st.info("😔 No specials available today. Check back tomorrow!")
+    else:
+        st.markdown("### 🍽️ Today's Special Menu")
+        
+        for _, row in spl_df.iterrows():
+            left_col, right_col = st.columns([3, 1])
+            
+            with left_col:
+                st.markdown(f"**{row['Item_name']}**")
+            
+            with right_col:
+                st.markdown(
+                    f"<div style='text-align: right; font-weight: bold; font-size: 16px; color: #ff6b6b;'>"
+                    f"{row['Category']}"
+                    f"</div>",
+                    unsafe_allow_html=True
+                )
+        
+        st.caption("👨‍🍳 Chef's Recommendation")
+
 def check_bulk_header(connection,file) :
     if len(file) != 0 :
         cursor = connection.cursor()
@@ -698,6 +873,90 @@ def get_item_price(connection,item,qty) :
     return price, tax_amt
 
 ##
+
+from datetime import datetime
+
+
+def get_current_month_sales(connection):
+    today = datetime.today().date()  
+    current_month = today.month
+    current_year = today.year
+    
+    query = """
+        SELECT to_char(value_date::date, 'Mon-DD') AS value_date, sum(tot_sales_amt) AS sales_amount
+        FROM sales_invoice_tbl 
+        WHERE EXTRACT(MONTH FROM value_date) = %(month)s
+          AND EXTRACT(YEAR FROM value_date) = %(year)s
+          AND value_date <= %(today)s
+       GROUP BY value_date::date 
+       ORDER BY value_date
+    """
+    
+    df = pd.read_sql(query, connection, params={
+        'month': current_month,
+        'year': current_year,
+        'today': today
+    })
+    
+    
+    #df['value_date'] = pd.to_datetime(df['value_date'])
+    df = df.set_index('value_date')
+    
+    
+    return df
+
+def get_current_week_sales(connection):
+    today = datetime.today().date()  
+    current_month = today.month
+    current_year = today.year
+    
+    query = """
+        select substr(to_char(value_date::date,'DD-Day'),1,6) AS value_date, tot_sales_amt AS sales_amount
+        FROM sales_invoice_tbl 
+        WHERE EXTRACT(MONTH FROM value_date) = %(month)s
+          AND EXTRACT(YEAR FROM value_date) = %(year)s
+          AND value_date >= value_date -7
+        ORDER BY value_date
+    """
+    
+    df = pd.read_sql(query, connection, params={
+        'month': current_month,
+        'year': current_year
+        })
+    
+    # Ensure date is datetime for proper x-axis
+    #df['value_date'] = pd.to_datetime(df['value_date'])
+    df = df.set_index('value_date')
+    
+    return df
+
+def get_current_day_sales(connection):
+    today = datetime.today().date()  
+    current_month = today.month
+    current_year = today.year
+    
+    query = """
+        select  item_name, sum(sales_amt) AS sales_amount
+        FROM sales_dtl_tbl 
+        WHERE EXTRACT(MONTH FROM value_date) = %(month)s
+          AND EXTRACT(YEAR FROM value_date) = %(year)s
+          AND value_date = %(today)s
+        GROUP BY item_name
+        ORDER BY sales_amount desc
+    """
+    
+    df = pd.read_sql(query, connection, params={
+        'month': current_month,
+        'year': current_year,
+        'today': today
+        })
+    
+    
+    #df['value_date'] = pd.to_datetime(df['value_date'])
+    df = df.set_index('item_name')
+    
+    return df
+    
 ##
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
@@ -741,14 +1000,14 @@ def welcome_alert(username):
 ##
 
 def login_alert():
+    
     #email_receipient = ALERT_RECIPIENT
-    email_receipient = EMAIL_USER
     #email_recipients = [e.strip() for e in email_receipient.split(",") if e.strip()]
     
     if SEND_ALERTS:
         message = Mail(
             from_email= EMAIL_FROM,
-            to_emails= email_receipient,
+            to_emails= ALERT_RECIPIENT,
             subject=f"🚨 New user logged in - {username}!",
             html_content=f"""
             <html>
@@ -800,6 +1059,30 @@ def welcome_alert_old(username):
         st.error(f"Email alert failed: {e}")
         logging.error(f"user login alert failure: {e}")
 ##
+
+def realign_list(item_list):
+    xdict = {}
+    matched = 0
+    name_list = []
+
+    for i in range(len(item_list)):
+        jlist = []
+        name=item_list[i][0]
+        jlist.append(item_list[i][1])
+    
+        for j in range(i+1, len(item_list)):
+            if name == item_list[j][0] and name not in name_list:
+                jlist.append(item_list[j][1])
+                matched = 1
+    
+        if matched == 1:
+            name_list.append(name)
+            xdict[name] = jlist
+            matched = 0
+        if  name not in name_list:
+            xdict[name] = jlist
+
+    return xdict
 
     
 def send_stock_alert(connection, item_name, new_stock):
@@ -895,6 +1178,7 @@ if 'initialized' not in st.session_state:
     st.session_state.tax_lis = {}
     st.session_state.bulk_lis = []
     st.session_state.count_lis = []
+    st.session_state.menu_alert = set()
     st.session_state.initialized = True
 
 if 'order_menu' not in st.session_state:
@@ -902,11 +1186,13 @@ if 'order_menu' not in st.session_state:
     st.session_state.stock_rec = {}
     st.session_state.tax_data = {}
     st.session_state.count_lis = []
+    st.session_state.menu_alert = set()
     st.session_state.tax_lis = {}  # For item-specific tax categories
 
 # --- Main App ---
 st.set_page_config(page_title="Restaurant Dashboard", layout="wide", initial_sidebar_state="expanded")
 st.title("🍽️ Interactive Restaurant Management Dashboard")
+
 
 connection = get_connection()
 if not connection:
@@ -931,22 +1217,79 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 # Sidebar for Portal Selection
-portal = st.sidebar.selectbox("Select Portal", ["Public (Order)","Corporate (Admin)"])
+portal = st.sidebar.selectbox("Select Portal", ["Dashboard (Main)","Public (Order)","Corporate (Admin)"])
 if st.sidebar.button("Logout"):
     st.session_state.clear()
-    st.rerun()
+    st.header("Logging out!")
+    st.stop()
 
-# --- Public Portal ---
-if portal == "Public (Order)":
-    if check_time() == 1:
-        show_special_avail_popup()
+# --- Dashboard Portal ---
+if portal == "Dashboard (Main)":
+    st.header("📊 Restaurant Dashboard: Sales Trend")
+    
+
+    sales_df = get_current_month_sales(connection)
+    if sales_df.empty:
+        st.info("No sales data yet for this month.")
     else:
-        show_special_unavail_popup()
+        chart_df = sales_df[['sales_amount']]
+        #chart_df = sales_df.set_index('value_date')[['sales_amount']]
+    
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            st.markdown("##### Current Month Sales")
+            st.bar_chart(chart_df, height=250, use_container_width=True)  
+    
+                
+            total_sales = sales_df['sales_amount'].sum()
+            st.metric("Total Sales This Month (till today)", f"₹{total_sales:,.2f}")
+
+        with col2:
+            
+            st.markdown("##### Current Week Sales")
+
+            sales_df = get_current_week_sales(connection)
+            
+            if sales_df.empty:
+                st.info("No sales data yet for this month.")
+            else:
+                chart_df = sales_df[['sales_amount']]
+                st.bar_chart(chart_df, height=250, use_container_width=True)  
+    
+                
+            total_sales = sales_df['sales_amount'].sum()
+            st.metric("Total Sales This Week", f"₹{total_sales:,.2f}")
+
+        
+        st.write("\n" * 5)
+        st.markdown("### Today's Sales data")
+        sales_df = get_current_day_sales(connection)
+            
+        if sales_df.empty:
+            st.info("No sales data yet for this month.")
+        else:
+            chart_df = sales_df[['sales_amount']]
+            st.bar_chart(chart_df, height=250, use_container_width=True)
+            total_sales = sales_df['sales_amount'].sum()
+            st.metric("Today's Total Sales", f"₹{total_sales:,.2f}")
+    
+# --- Public Portal ---
+elif portal == "Public (Order)":
+
+                
     st.header("🛒 Public Portal: Place Orders")
     tab1, tab2, tab3, tab4, tab_cart, tab_bill = st.tabs(["Coffee", "Tea", "Chat", "Special", "Cart", "Bill"])
     
     with tab1:  # Coffee
         st.subheader("☕ Coffee Menu")
+        if len(st.session_state.menu_alert) == 0:
+            show_today_spl_popup(connection)
+            st.session_state.menu_alert.add(1)
+
+        category = 'Coffee'
+        update_spl_item(connection, category)
+        
+            
         df_coffee = fetch_coffee_df(connection)
 
         if not df_coffee.empty:
@@ -984,6 +1327,9 @@ if portal == "Public (Order)":
 
     with tab2:  # Tea
         st.subheader("🫖 Tea Menu")
+
+        category = 'Tea'
+        update_spl_item(connection, category)
         df_tea = fetch_tea_df(connection)
         if not df_tea.empty:
             st.dataframe(df_tea[['ItemNo', 'Name', 'Price']])
@@ -1013,6 +1359,9 @@ if portal == "Public (Order)":
     with tab3:  # Chat
         st.subheader("🍗🥕 Chat Menu")
         category = st.selectbox("Category", ["Both", "VEG", "NV"])
+        
+        cty = 'Chat'
+        update_spl_item(connection, cty)
         df_chat = fetch_chat_df(connection, category)
         if not df_chat.empty:
             st.dataframe(df_chat[['ItemNo', 'Name', 'Price']])
@@ -1197,151 +1546,258 @@ elif portal == "Corporate (Admin)":
     st.header("⚙️ Corporate Portal: Admin Dashboard")
     tab_admin1, tab_admin2, tab_admin3,tab_admin4 = st.tabs(["Maintenance", "Graphs & Reports", "Dynamic Reports", "Bulk Orders"])
     with tab_admin1:
-        st.subheader("1. View Current Stock")
-        if st.button("Refresh & Show Stock"):
-            st.session_state.stock_rec = get_stock_data(connection)
-            df_stock = pd.DataFrame(list(st.session_state.stock_rec.items()), columns=['Item', 'Available Stock'])
-            st.dataframe(df_stock)
+        tab_stock, tab_add_del, tab_update_price, tab_tax_data, tab_weekday_spl_menu = st.tabs(["Stock Maintenance", "Add-Del Item", "Update price", "Tax Data", "Special Menu"])
+        with tab_stock:
+            st.subheader("📈 View Current Stock")
+            if st.button("Refresh & Show Stock"):
+                st.session_state.stock_rec = get_stock_data(connection)
+                df_stock = pd.DataFrame(list(st.session_state.stock_rec.items()), columns=['Item', 'Available Stock'])
+                st.dataframe(df_stock)
 
-        st.subheader("2. Load Shortage Stocks")
-        if st.button("Get Shortage Stock"):
-            st.session_state.stock_rec = get_shortage_stock_data(connection)
-            df_stock = pd.DataFrame(list(st.session_state.stock_rec.items()), columns=['Item', 'Available Stock'])
-            st.dataframe(df_stock)
+            st.subheader("📊 Load Shortage Stocks")
+            if st.button("Get Shortage Stock"):
+                st.session_state.stock_rec = get_shortage_stock_data(connection)
+                df_stock = pd.DataFrame(list(st.session_state.stock_rec.items()), columns=['Item', 'Available Stock'])
+                st.dataframe(df_stock)
             
-        if st.button("Load Stock"):
-            load_shortage_stock_data(connection)
-        st.subheader("3. Item Addition/Deletion")
-        category = st.selectbox("Category", ["Coffee", "Tea", "Chat", "Spl"])
-        action = st.selectbox("Action", ["Add", "Delete"])
-        with st.form("item_add_del"):
-            if action != 'Delete' :
-                item_name = st.text_input("Item Name")
-            else : 
-                if category == 'Coffee':
-                    df_items = fetch_coffee_df(connection)
-                elif category == 'Tea':
-                    df_items = fetch_tea_df(connection)
-                elif category == 'Chat':
-                    category = 'Both'
-                    df_items = fetch_chat_df(connection, category)
-                elif category == 'Spl':
-                    df_items = fetch_snack_df(connection)
-                item_options = df_items.set_index('ItemNo')['Name'].to_dict()
-                item_no = st.selectbox("Select Item", options=list(item_options.keys()), format_func=lambda x: f"{x}: {item_options[x]}")
-                item_name = item_options[item_no]
-            if action != 'Delete' :
-                price = st.number_input("Price (for Add)", min_value=0.0, value=0.0)
-            if action != 'Delete' :
-                if category == "Chat"  :
-                    item_category = st.text_input("Enter VEG / NV")
-            if action != 'Delete' :
-                if category == 'Coffee' or  category == 'Tea':
-                    tax_slab = st.text_input("Tax Tier (TIER1)")
-                else:
-                    tax_slab = st.text_input("Tax Tier (TIER2/3)")
+            if st.button("Load Stock"):
+                load_shortage_stock_data(connection)
+        with tab_add_del:
+            st.subheader("➕/➖ Item Addition/Deletion")
+            category = st.selectbox("Category", ["Coffee", "Tea", "Chat", "Spl"])
+            action = st.selectbox("Action", ["Add", "Delete"])
+            with st.form("item_add_del"):
+                if action != 'Delete' :
+                    item_name = st.text_input("Item Name")
+                else : 
+                    if category == 'Coffee':
+                        df_items = fetch_coffee_df(connection)
+                    elif category == 'Tea':
+                        df_items = fetch_tea_df(connection)
+                    elif category == 'Chat':
+                        category = 'Both'
+                        df_items = fetch_chat_df(connection, category)
+                    elif category == 'Spl':
+                        df_items = fetch_snack_df(connection)
+                    item_options = df_items.set_index('ItemNo')['Name'].to_dict()
+                    item_no = st.selectbox("Select Item", options=list(item_options.keys()), format_func=lambda x: f"{x}: {item_options[x]}")
+                    item_name = item_options[item_no]
+                if action != 'Delete' :
+                    price = st.number_input("Price (for Add)", min_value=0.0, value=0.0)
+                if action != 'Delete' :
+                    if category == "Chat"  :
+                        item_category = st.selectbox("Category_inp", ['VEG','NV'])
+                if action != 'Delete' :
+                    if category == 'Coffee' or  category == 'Tea':
+                        tax_slab = st.text_input("Tax Tier (TIER1)")
+                    else:
+                        tax_slab = st.selectbox("Tax_Tier_inp", ['TIER2','TIER3'])
                     
-            submitted = st.form_submit_button(f"{action} Item")
-            if submitted:
-                cursor = connection.cursor()
-                if action == "Add":
-                    if category == "Coffee":
-                        ins_stmt = "INSERT INTO coffee_menu_tbl(coffee_name, price, tax_category) VALUES (%s, %s, %s)"
-                        cursor.execute(ins_stmt, (item_name, price, tax_slab))
-                    elif category == "Tea":
-                        ins_stmt = "INSERT INTO tea_menu_tbl(tea_name, price, tax_category) VALUES (%s, %s, %s)"
-                        cursor.execute(ins_stmt, (item_name, price, tax_slab))
-                    elif category == "Chat":
-                        ins_stmt = "INSERT INTO chat_menu_tbl(chat_name, price, tax_category, category) VALUES (%s, %s, %s, %s)"
-                        cursor.execute(ins_stmt, (item_name, price, tax_slab, item_category))
-                    else:
-                        ins_stmt = "INSERT INTO special_snacks_tbl(item_name, price, tax_category) VALUES (%s, %s, %s)"
-                        cursor.execute(ins_stmt, (item_name, price, tax_slab))
-                else:  # Delete
-                    if category == "Coffee":
-                        del_stmt = "UPDATE coffee_menu_tbl SET delete_flag='Y' WHERE coffee_name = %s"
-                        cursor.execute(del_stmt, (item_name,))
-                    elif category == "Tea":
-                        del_stmt = "UPDATE tea_menu_tbl SET delete_flag='Y' WHERE tea_name = %s"
-                        cursor.execute(del_stmt, (item_name,))
-                    elif category == "Chat":
-                        del_stmt = "UPDATE chat_menu_tbl SET delete_flag='Y' WHERE chat_name = %s"
-                        cursor.execute(del_stmt, (item_name,))
-                    else:
-                        del_stmt = "UPDATE special_snacks_tbl SET delete_flag='Y' WHERE item_name = %s"
-                        cursor.execute(del_stmt, (item_name,))
-                connection.commit()
-                cursor.close()
-                st.success(f"{action}ed {item_name} in {category}!")
-                st.rerun()
-        st.subheader("4. Update Item Prices")
-        category_price = st.selectbox("Category for Price Update", ["Coffee", "Tea", "Chat", "Spl"], key="price_cat")
-        with st.form("price_update"):
-            if category_price == "Coffee":
-                df_items = fetch_coffee_df(connection)
-            elif category_price == "Tea":
-                df_items = fetch_tea_df(connection)
-            elif category_price == "Chat":
-                df_items = fetch_chat_df(connection, "Both")
-            else:
-                df_items = fetch_snack_df(connection)
-                
-            if not df_items.empty:
-                item_options = df_items.set_index('ItemNo')['Name'].to_dict()
-                item_no = st.selectbox("Select Item", options=list(item_options.keys()), format_func=lambda x: f"{x}: {item_options[x]}")
-                matching_row = df_items[df_items['ItemNo'] == item_no]
-                if 'current_price' not in st.session_state:
-                    st.session_state.current_price = 0.0
-                st.session_state.current_price = float(matching_row['Price'].values[0])
-                if st.form_submit_button("Show Price"):
-                    st.metric("Current Price", st.session_state.current_price)                    
-                new_price = st.number_input("New Price", min_value=0.0, value=0.0)
-                submitted = st.form_submit_button("Update Price")
-    
-                
-    
+                submitted = st.form_submit_button(f"{action} Item")
                 if submitted:
                     cursor = connection.cursor()
-                    item_name = item_options[item_no]
-                    if category_price == "Coffee":
-                        upd_stmt = "UPDATE coffee_menu_tbl SET price = %s WHERE coffee_name = %s"
-                        cursor.execute(upd_stmt, (new_price, item_name))
-                    elif category_price == "Tea":
-                        upd_stmt = "UPDATE tea_menu_tbl SET price = %s WHERE tea_name = %s"
-                        cursor.execute(upd_stmt, (new_price, item_name))
-                    elif category_price == "Chat":
-                        upd_stmt = "UPDATE chat_menu_tbl SET price = %s WHERE chat_name = %s"
-                        cursor.execute(upd_stmt, (new_price, item_name))
-                    else:
-                        upd_stmt = "UPDATE special_snacks_tbl SET price = %s WHERE item_name = %s"
-                        cursor.execute(upd_stmt, (new_price, item_name))
+                    if action == "Add":
+                        if category == "Coffee":
+                            ins_stmt = "INSERT INTO coffee_menu_tbl(coffee_name, price, tax_category) VALUES (%s, %s, %s)"
+                            cursor.execute(ins_stmt, (item_name, price, tax_slab))
+                        elif category == "Tea":
+                            ins_stmt = "INSERT INTO tea_menu_tbl(tea_name, price, tax_category) VALUES (%s, %s, %s)"
+                            cursor.execute(ins_stmt, (item_name, price, tax_slab))
+                        elif category == "Chat":
+                            ins_stmt = "INSERT INTO chat_menu_tbl(chat_name, price, tax_category, category) VALUES (%s, %s, %s, %s)"
+                            cursor.execute(ins_stmt, (item_name, price, tax_slab, item_category))
+                        else:
+                            ins_stmt = "INSERT INTO special_snacks_tbl(item_name, price, tax_category) VALUES (%s, %s, %s)"
+                            cursor.execute(ins_stmt, (item_name, price, tax_slab))
+                    else:  # Delete
+                        if category == "Coffee":
+                            del_stmt = "UPDATE coffee_menu_tbl SET delete_flag='Y' WHERE coffee_name = %s"
+                            cursor.execute(del_stmt, (item_name,))
+                        elif category == "Tea":
+                            del_stmt = "UPDATE tea_menu_tbl SET delete_flag='Y' WHERE tea_name = %s"
+                            cursor.execute(del_stmt, (item_name,))
+                        elif category == "Chat":
+                            del_stmt = "UPDATE chat_menu_tbl SET delete_flag='Y' WHERE chat_name = %s"
+                            cursor.execute(del_stmt, (item_name,))
+                        else:
+                            del_stmt = "UPDATE special_snacks_tbl SET delete_flag='Y' WHERE item_name = %s"
+                            cursor.execute(del_stmt, (item_name,))
                     connection.commit()
                     cursor.close()
-                    st.success(f"Updated price for {item_name} to Rs.{new_price:.2f}!")
+                    st.success(f"{action}ed {item_name} in {category}!")
                     st.rerun()
-            else:
-                st.warning(f"No items in {category_price}.")
+        with tab_update_price:
+            st.subheader("⬆️ / ⬇️ Update Item Prices")
+            category_price = st.selectbox("Category for Price Update", ["Coffee", "Tea", "Chat", "Spl"], key="price_cat")
+            with st.form("price_update"):
+                if category_price == "Coffee":
+                    df_items = fetch_coffee_df(connection)
+                elif category_price == "Tea":
+                    df_items = fetch_tea_df(connection)
+                elif category_price == "Chat":
+                    df_items = fetch_chat_df(connection, "Both")
+                else:
+                    df_items = fetch_snack_df(connection)
                 
-        st.subheader("5. Show Tax Category")
-        if st.button("Get Tax Slabs"):
+                if not df_items.empty:
+                    item_options = df_items.set_index('ItemNo')['Name'].to_dict()
+                    item_no = st.selectbox("Select Item", options=list(item_options.keys()), format_func=lambda x: f"{x}: {item_options[x]}")
+                    matching_row = df_items[df_items['ItemNo'] == item_no]
+                    if 'current_price' not in st.session_state:
+                        st.session_state.current_price = 0.0
+                    st.session_state.current_price = float(matching_row['Price'].values[0])
+                    if st.form_submit_button("Show Price"):
+                        st.metric("Current Price", st.session_state.current_price)                    
+                    new_price = st.number_input("New Price", min_value=0.0, value=0.0)
+                    submitted = st.form_submit_button("Update Price")
+    
+                
+    
+                    if submitted:
+                        cursor = connection.cursor()
+                        item_name = item_options[item_no]
+                        if category_price == "Coffee":
+                            upd_stmt = "UPDATE coffee_menu_tbl SET price = %s WHERE coffee_name = %s"
+                            cursor.execute(upd_stmt, (new_price, item_name))
+                        elif category_price == "Tea":
+                            upd_stmt = "UPDATE tea_menu_tbl SET price = %s WHERE tea_name = %s"
+                            cursor.execute(upd_stmt, (new_price, item_name))
+                        elif category_price == "Chat":
+                            upd_stmt = "UPDATE chat_menu_tbl SET price = %s WHERE chat_name = %s"
+                            cursor.execute(upd_stmt, (new_price, item_name))
+                        else:
+                            upd_stmt = "UPDATE special_snacks_tbl SET price = %s WHERE item_name = %s"
+                            cursor.execute(upd_stmt, (new_price, item_name))
+                        connection.commit()
+                        cursor.close()
+                        st.success(f"Updated price for {item_name} to Rs.{new_price:.2f}!")
+                        st.rerun()
+                else:
+                    st.warning(f"No items in {category_price}.")
+
+        with tab_tax_data:        
+            st.subheader("🧾 Show Tax Category")
+            if st.button("Get Tax Slabs"):
+                st.session_state.tax_rec = load_tax_data(connection)
+                df_tax = pd.DataFrame(list(st.session_state.tax_rec.items()), columns=['Tax Slab', 'Tax Amt'])
+                st.dataframe(df_tax)
+            
+            st.subheader("🔢 Update Tax Amount")
             st.session_state.tax_rec = load_tax_data(connection)
             df_tax = pd.DataFrame(list(st.session_state.tax_rec.items()), columns=['Tax Slab', 'Tax Amt'])
-            st.dataframe(df_tax)
-            
-        st.subheader("6. Update Tax Amount")
-        st.session_state.tax_rec = load_tax_data(connection)
-        df_tax = pd.DataFrame(list(st.session_state.tax_rec.items()), columns=['Tax Slab', 'Tax Amt'])
-        tax_category = st.selectbox("Select Tax Category", options=df_tax['Tax Slab'].unique())
-        tax_amount = st.text_input("Tax Amount", value=0.0)
-        if st.button("Update Tax Amount"):
-            update_tax_amt(connection,tax_category,tax_amount)
-            st.success("Tax Amount updated successfully!")
-            st.rerun()
+            tax_category = st.selectbox("Select Tax Category", options=df_tax['Tax Slab'].unique())
+            tax_amount = st.text_input("Tax Amount", value=0.0)
+            if st.button("Update Tax Amount"):
+                update_tax_amt(connection,tax_category,tax_amount)
+                st.success("Tax Amount updated successfully!")
+                st.rerun()
+                
+        with tab_weekday_spl_menu:
+            tab_show_spl, tab_rec_maintenance = st.tabs(["Show Menu", "Record Maintenance"])
+            with tab_show_spl:
+                st.subheader("📖 Show Weekday Spl Menu")
+                ctg = st.selectbox("Menu_Category", ["Coffee", "Tea", "Chat"])
+                if st.button("Get Spl Menu"):
+                    df_weekday_spl = fetch_weekday_spl_df(connection, ctg)
+                    if not df_weekday_spl.empty:
+                        st.dataframe(df_weekday_spl)
+                    else:
+                        st.warning("No Spl. Menu")
+                        
+            with tab_rec_maintenance:
+                st.subheader("🗂 Record Maintenance")
+                tab_add, tab_del, tab_upd = st.tabs(["Rec Addition", "Rec Deletion", "Rec Updation"])
+                
+                with tab_add:
+                    delflag = ['Y','N']
+                    category = st.selectbox("Add_Category", ["Coffee", "Tea", "Chat"])
+                    if category == 'Coffee':
+                        item_list = fetch_coffee(connection)
+                    elif category == 'Tea':
+                        item_list = fetch_tea(connection)
+                    else:
+                        item_list = fetch_chat(connection)
+
+                    day_list = fetch_weekday(connection)
+                    
+                    col1, col2, col3  = st.columns(3)
+                    
+                    with col1:
+                        item_selected = st.selectbox("Select_Item",item_list)
+                    with col2:
+                        day_selected = st.selectbox("Days", day_list)
+                    with col3:
+                        del_flg = st.selectbox("Delete-Flag",delflag)
+
+                    submitted = st.button("Add Menu", key="add-key")
+                    if submitted:
+                        load_weekday_data(connection,item_selected,category,day_selected,del_flg)
+                        st.success("Spl Menu Created")
+
+                with tab_del:
+                    dflag = ['Y']
+                    cat = st.selectbox("Del_Category", ["Coffee", "Tea", "Chat"])
+                    if cat == 'Coffee':
+                        item_list = fetch_weekday_item(connection, cat)
+                    elif cat == 'Tea':
+                        item_list = fetch_weekday_item(connection, cat)
+                    else:
+                        item_list = fetch_weekday_item(connection, cat)
+                        
+                    item_dict = realign_list(item_list)
+                    
+                    
+                    col1, col2, col3  = st.columns(3)
+                    with col1:
+                        
+                        item_selected = st.selectbox("Choose_Item",item_dict.keys())
+                    with col2:
+                        wkday = st.selectbox("Weekday",item_dict[item_selected])
+                    with col3:
+                        del_flg = st.selectbox("DeleteFlag", dflag)
+                    
+                    submitted = st.button("Del Menu",key="del-key")
+                    if submitted:
+                        upd_weekday_data(connection,item_selected,wkday,del_flg)
+                        st.success("Spl Menu Removed")
+
+
+                with tab_upd:                   
+                    dflag = ['Y','N']
+                    cat = st.selectbox("Update_Category", ["Coffee", "Tea", "Chat"])
+                    if cat == 'Coffee':
+                        item_list = fetch_weekday_item(connection, cat)
+                    elif cat == 'Tea':
+                        item_list = fetch_weekday_item(connection, cat)
+                    else:
+                        item_list = fetch_weekday_item(connection, cat)
+                        
+                    item_dict = realign_list(item_list)
+                    daylist = fetch_weekday(connection)
+                    
+                    col1, col2, col3, col4   = st.columns([3, 3, 1, 3])
+                    with col1:
+                        
+                        item_selected = st.selectbox("Opt_Item",item_dict.keys())
+                    with col2:
+                        pwkday = st.selectbox("Weekdays",item_dict[item_selected])
+                    with col3:
+                        del_flg = st.selectbox("Delete_Flag", dflag)
+                    with col4:
+                        wkday = st.selectbox("Choose Day", daylist)
+
+                    submitted = st.button("Update Menu",key="upd-key")
+                    if submitted:
+                        update_weekday_data(connection,item_selected,pwkday,wkday,del_flg)
+                        st.success("Spl Menu Updated")
+                    
+                        
+                        
             
     with tab_admin2:
         st.subheader("Sales Graphs")
         period = st.selectbox("Period", ["Daily", "Weekly", "Monthly"])
-        category = st.selectbox("Category", ["Coffee", "Tea", "Chat", "Spl", "Overall"])
+        category = st.selectbox("Rep_Category", ["Coffee", "Tea", "Chat", "Spl", "Overall"])
         if st.button("Generate Chart"):
             if category == "Coffee":
                 fig = coffee_sales_fig(connection, period)
@@ -1975,5 +2431,6 @@ st.sidebar.markdown(
     **Powered by:**
     - [Streamlit](https://streamlit.io)
     - [Supabase](https://supabase.com) (PostgreSQL + BaaS)
+    - [GIT-HUB] (https://github.com/unixanand/restaurant-app-stcloud)
     """
 )
