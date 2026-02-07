@@ -1249,7 +1249,7 @@ if portal == "Dashboard (Main)":
         ax.bar(
             sales_df['value_date'],
             sales_df['sales_amount'],
-            color=plt.cm.tab20.colors[:len(chart_df)]
+            color=plt.cm.tab20.colors[:len(sales_df)]
         )
 
         st.pyplot(fig)
@@ -1274,7 +1274,7 @@ if portal == "Dashboard (Main)":
             ax.bar(
                 sales_df['value_date'],
                 sales_df['sales_amount'],
-                color=plt.cm.tab20.colors[:len(chart_df)]
+                color=plt.cm.tab20.colors[:len(sales_df)]
             )
 
             st.pyplot(fig)
@@ -1293,7 +1293,7 @@ if portal == "Dashboard (Main)":
             st.info("No sales data yet.")
         else:
             #chart_df = sales_df[['sales_amount']]
-            st.bar_chart(sales_df,x='item_name',y='sales_amount',height=400,use_container_width=True)
+            #st.bar_chart(sales_df,x='item_name',y='sales_amount',height=400,use_container_width=True)
             fig, ax = plt.subplots()
 
             ax.bar(
