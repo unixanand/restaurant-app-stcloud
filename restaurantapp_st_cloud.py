@@ -1240,8 +1240,8 @@ if portal == "Dashboard (Main)":
     
         
         st.markdown("##### Current Month Sales")
-        st.bar_chart(chart_df, height=250, use_container_width=True)  
-    
+        #st.bar_chart(chart_df, height=250, use_container_width=True)  
+        sales_df.plot(kind='bar', x='value_date', y='sales_amount', ax=ax, color=plt.cm.Set3(np.linspace(0, 1, len(df))), title=f'Monthly Sales')
                 
         total_sales = sales_df['sales_amount'].sum()
         st.metric("Total Sales This Month (till today)", f"₹{total_sales:,.2f}")
