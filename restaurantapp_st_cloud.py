@@ -956,7 +956,22 @@ def get_current_day_sales(connection):
     df = df.sort_values('sales_amount', ascending=False)
     
     return df
-    
+
+
+def get_sales_hourly_trend(connection):
+    today = datetime.today().date()
+
+    query = """
+        select to_char(sales_date_ts,'HH') as hrly_sale, sum(sales_amt) AS sales_amount
+        from daily_sales_tbl
+        where to_char(sales_date_ts,'YYYY-MM-DD')= to_char(current_date,'YYYY-MM-DD')
+        group by hrly_sale
+        ORDER BY hrly_sale
+    """
+    df = pd.read_sql(query, connection)
+
+    return df
+
 ##
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
@@ -1306,6 +1321,25 @@ if portal == "Dashboard (Main)":
             
             total_sales = sales_df['sales_amount'].sum()
             st.metric("Today's Total Sales", f"₹{total_sales:,.2f}")
+            
+    with tab1:
+        st.markdown("### Today's hourly Sales trend")
+        sales_df = get_sales_hourly_trend(connection)
+            
+        if sales_df.empty:
+            st.info("No sales data yet.")
+        else:
+            fig, ax = plt.subplots()
+
+            ax.bar(
+                sales_df['hrly_sale'],
+                sales_df['sales_amount'],
+                color=plt.cm.tab20.colors[:len(chart_df)]
+            )
+
+            st.pyplot(fig)
+            
+            
     
 # --- Public Portal ---
 elif portal == "Public (Order)":
