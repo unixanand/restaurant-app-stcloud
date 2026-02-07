@@ -900,8 +900,8 @@ def get_current_month_sales(connection):
     
     
     #df['value_date'] = pd.to_datetime(df['value_date'])
-    #df = df.set_index('value_date')
-    df = pd.DataFrame(rows, columns=['value_date', 'sales_amount'])
+    df = df.set_index('value_date')
+    
     
     return df
 
@@ -1241,8 +1241,18 @@ if portal == "Dashboard (Main)":
         
         st.markdown("##### Current Month Sales")
         #st.bar_chart(chart_df, height=250, use_container_width=True)  
-        sales_df.plot(kind='bar', x='value_date', y='sales_amount', ax=ax, color=plt.cm.Set3(np.linspace(0, 1, len(df))), title=f'Monthly Sales')
-                
+        
+
+        fig, ax = plt.subplots()
+
+        ax.bar(
+            chart_df['value_date'],
+            chart_df['sales_amount'],
+            color=plt.cm.tab20.colors[:len(chart_df)]
+        )
+
+        st.pyplot(fig)
+        
         total_sales = sales_df['sales_amount'].sum()
         st.metric("Total Sales This Month (till today)", f"₹{total_sales:,.2f}")
 
