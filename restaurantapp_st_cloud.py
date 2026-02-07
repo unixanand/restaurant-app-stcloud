@@ -1226,42 +1226,45 @@ if st.sidebar.button("Logout"):
 # --- Dashboard Portal ---
 if portal == "Dashboard (Main)":
     st.header("📊 Restaurant Dashboard: Sales Trend")
-    
 
-    sales_df = get_current_month_sales(connection)
-    if sales_df.empty:
-        st.info("No sales data yet for this month.")
-    else:
-        chart_df = sales_df[['sales_amount']]
-        #chart_df = sales_df.set_index('value_date')[['sales_amount']]
+    tab1, tab2, tab3, tab4 = st.tabs(["Hourly-Sales", "Today-Sales", "Weekly-Sales", "Monthly-Sales"])
+
+    with tab4:
+
+        sales_df = get_current_month_sales(connection)
+        if sales_df.empty:
+            st.info("No sales data yet for this month.")
+        else:
+            chart_df = sales_df[['sales_amount']]
+            #chart_df = sales_df.set_index('value_date')[['sales_amount']]
     
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            st.markdown("##### Current Month Sales")
+        
+        st.markdown("##### Current Month Sales")
+        st.bar_chart(chart_df, height=250, use_container_width=True)  
+    
+                
+        total_sales = sales_df['sales_amount'].sum()
+        st.metric("Total Sales This Month (till today)", f"₹{total_sales:,.2f}")
+
+    with tab3:
+            
+        st.markdown("##### Current Week Sales")
+
+        sales_df = get_current_week_sales(connection)
+            
+        if sales_df.empty:
+            st.info("No sales data yet for this month.")
+        else:
+            chart_df = sales_df[['sales_amount']]
             st.bar_chart(chart_df, height=250, use_container_width=True)  
     
                 
-            total_sales = sales_df['sales_amount'].sum()
-            st.metric("Total Sales This Month (till today)", f"₹{total_sales:,.2f}")
-
-        with col2:
-            
-            st.markdown("##### Current Week Sales")
-
-            sales_df = get_current_week_sales(connection)
-            
-            if sales_df.empty:
-                st.info("No sales data yet for this month.")
-            else:
-                chart_df = sales_df[['sales_amount']]
-                st.bar_chart(chart_df, height=250, use_container_width=True)  
-    
-                
-            total_sales = sales_df['sales_amount'].sum()
-            st.metric("Total Sales This Week", f"₹{total_sales:,.2f}")
+        total_sales = sales_df['sales_amount'].sum()
+        st.metric("Total Sales This Week", f"₹{total_sales:,.2f}")
 
         
-        st.write("\n" * 10)
+    with tab2:
+        
         st.markdown("### Today's Sales data")
         sales_df = get_current_day_sales(connection)
             
