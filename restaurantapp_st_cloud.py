@@ -900,8 +900,8 @@ def get_current_month_sales(connection):
     
     
     #df['value_date'] = pd.to_datetime(df['value_date'])
-    df = df.set_index('value_date')
-    
+    #df = df.set_index('value_date')
+    df = pd.DataFrame(rows, columns=['value_date', 'sales_amount'])
     
     return df
 
