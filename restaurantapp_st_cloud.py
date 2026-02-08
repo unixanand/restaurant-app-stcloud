@@ -350,7 +350,7 @@ def check_time():
     """Check if current time is within special menu hours (17:00-19:00)."""
     local_time = datetime.now(pytz.timezone("Asia/Kolkata"))
     HH = int(local_time.strftime("%H"))
-    return 1 if 17 <= HH <= 19 else 0
+    return 1 if 17 <= HH < 19 else 0
 
 def fetch_spl_df(connection):
     """Fetch special snacks menu if within time."""
