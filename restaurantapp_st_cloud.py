@@ -913,16 +913,12 @@ def get_current_week_sales(connection):
     query = """
         select substr(to_char(value_date::date,'DD-Day'),1,6) AS value_date, tot_sales_amt AS sales_amount
         FROM sales_invoice_tbl 
-        WHERE EXTRACT(MONTH FROM value_date) = %(month)s
-          AND EXTRACT(YEAR FROM value_date) = %(year)s
-          AND value_date >= value_date -7
+        WHERE value_date >= date_trunc('week', CURRENT_DATE ) 
+          AND value_date <= date_trunc('week', CURRENT_DATE ) + INTERVAL '6 days'
         ORDER BY value_date
     """
     
-    df = pd.read_sql(query, connection, params={
-        'month': current_month,
-        'year': current_year
-        })
+    df = pd.read_sql(query, connection)
     
     # Ensure date is datetime for proper x-axis
     #df['value_date'] = pd.to_datetime(df['value_date'])
@@ -1262,7 +1258,8 @@ if portal == "Dashboard (Main)":
             sales_df['sales_amount'],
             color=plt.cm.tab20.colors[:len(sales_df)]
         )
-
+        ax.set_ylabel("Sales Amount")
+        
         st.pyplot(fig)
         
         total_sales = chart_df['sales_amount'].sum()
@@ -1288,6 +1285,8 @@ if portal == "Dashboard (Main)":
                 color=plt.cm.tab20.colors[:len(sales_df)]
             )
 
+            ax.set_ylabel("Sales Amount")
+            
             st.pyplot(fig)
     
                 
@@ -1297,7 +1296,7 @@ if portal == "Dashboard (Main)":
         
     with tab2:
         
-        st.markdown("### Today's Sales data")
+        st.markdown("### Today's Sales Trend - Top 5 Sales")
         sales_df = get_current_day_sales(connection)
             
         if sales_df.empty:
@@ -1312,11 +1311,15 @@ if portal == "Dashboard (Main)":
                 sales_df['sales_amt'],
                 color=plt.cm.tab20.colors[:len(chart_df)]
             )
-
+            ax.set_xlabel("Item")
+            ax.set_ylabel("Sales Amount")
+            plt.xticks(rotation=45, ha='right')
+            plt.tight_layout()
+            
             st.pyplot(fig)
             
             total_sales = sales_df['sales_amt'].sum()
-            st.metric("Today's Total Sales", f"₹{total_sales:,.2f}")
+            st.metric("Today's Top Total Sales", f"₹{total_sales:,.2f}")
             
     with tab1:
         st.markdown("### Today's hourly Sales trend")
@@ -1332,7 +1335,7 @@ if portal == "Dashboard (Main)":
                 sales_df['sales_amount'],
                 color=plt.cm.tab20.colors[:len(chart_df)]
             )
-
+            ax.set_ylabel("Sales Amount")
             st.pyplot(fig)
             
             
