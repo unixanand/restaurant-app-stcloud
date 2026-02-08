@@ -1309,13 +1309,13 @@ if portal == "Dashboard (Main)":
 
             ax.bar(
                 sales_df['item_name'],
-                sales_df['sales_amount'],
+                sales_df['sales_amt'],
                 color=plt.cm.tab20.colors[:len(chart_df)]
             )
 
             st.pyplot(fig)
             
-            total_sales = sales_df['sales_amount'].sum()
+            total_sales = sales_df['sales_amt'].sum()
             st.metric("Today's Total Sales", f"₹{total_sales:,.2f}")
             
     with tab1:
