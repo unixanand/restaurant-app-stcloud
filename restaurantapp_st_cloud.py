@@ -936,24 +936,19 @@ def get_current_day_sales(connection):
     current_year = today.year
     
     query = """
-        select  item_name, sum(sales_amt) AS sales_amount
-        FROM sales_dtl_tbl 
-        WHERE EXTRACT(MONTH FROM value_date) = %(month)s
-          AND EXTRACT(YEAR FROM value_date) = %(year)s
-          AND value_date = %(today)s
-        GROUP BY item_name
-        ORDER BY sales_amount desc
+        select item_name, sum(sales_amt) as sales_amt
+        from sales_dtl_tbl
+        where value_date = current_date
+        group by item_name
+        order by sales_amt desc
+        limit 5
     """
     
-    df = pd.read_sql(query, connection, params={
-        'month': current_month,
-        'year': current_year,
-        'today': today
-        })
+    df = pd.read_sql(query, connection)
     
     
     #df['value_date'] = pd.to_datetime(df['value_date'])
-    df = df.sort_values('sales_amount', ascending=False)
+    #df = df.sort_values('sales_amount', ascending=False)
     
     return df
 
@@ -962,7 +957,8 @@ def get_sales_hourly_trend(connection):
     today = datetime.today().date()
 
     query = """
-        select to_char(sales_date_ts,'HH') as hrly_sale, sum(sales_amt) AS sales_amount
+        select to_char(sales_date_ts AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata','HH12 AM') as hrly_sale,
+        sum(sales_amt) AS sales_amount
         from daily_sales_tbl
         where to_char(sales_date_ts,'YYYY-MM-DD')= to_char(current_date,'YYYY-MM-DD')
         group by hrly_sale
