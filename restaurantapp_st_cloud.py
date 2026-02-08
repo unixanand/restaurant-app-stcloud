@@ -340,6 +340,7 @@ def fetch_chat_df(connection, category):
         select_rec = "SELECT ROW_NUMBER() OVER () rn, chat_name, price, tax_category FROM chat_menu_tbl a WHERE category = 'NV' AND a.chat_name IN (SELECT b.item_name FROM STOCK_MAINTENANCE_TXN_TBL b WHERE a.chat_name = b.item_name AND value_date = CURRENT_DATE AND avail_stock > 0) AND a.delete_flag='N'"
     else : 
         select_rec = "SELECT ROW_NUMBER() OVER () rn, chat_name, price, tax_category FROM chat_menu_tbl a WHERE a.chat_name IN (SELECT b.item_name FROM STOCK_MAINTENANCE_TXN_TBL b WHERE a.chat_name = b.item_name AND value_date = CURRENT_DATE AND avail_stock > 0) AND a.delete_flag='N'"
+
     cursor.execute(select_rec)
     rows = cursor.fetchall()
     df = pd.DataFrame(rows, columns=['ItemNo', 'Name', 'Price', 'TaxCategory'])
