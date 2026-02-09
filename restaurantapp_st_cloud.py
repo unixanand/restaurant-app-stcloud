@@ -1273,7 +1273,7 @@ if portal == "Dashboard (Main)":
         sales_df = get_current_week_sales(connection)
             
         if sales_df.empty:
-            st.info("No sales data yet for this month.")
+            st.info("No sales data yet for this week.")
         else:
             chart_df = sales_df[['sales_amount']]
             sales_df = sales_df.reset_index()
@@ -1291,8 +1291,8 @@ if portal == "Dashboard (Main)":
             st.pyplot(fig)
     
                 
-        total_sales = chart_df['sales_amount'].sum()
-        st.metric("Total Sales This Week", f"₹{total_sales:,.2f}")
+            total_sales = chart_df['sales_amount'].sum()
+            st.metric("Total Sales This Week", f"₹{total_sales:,.2f}")
 
         
     with tab2:
