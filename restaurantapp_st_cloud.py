@@ -1310,7 +1310,7 @@ if portal == "Dashboard (Main)":
             ax.bar(
                 sales_df['item_name'],
                 sales_df['sales_amt'],
-                color=plt.cm.tab20.colors[:len(chart_df)]
+                color=plt.cm.tab20.colors[:len(sales_df)]
             )
             ax.set_xlabel("Item")
             ax.set_ylabel("Sales Amount")
@@ -1334,7 +1334,7 @@ if portal == "Dashboard (Main)":
             ax.bar(
                 sales_df['hrly_sale'],
                 sales_df['sales_amount'],
-                color=plt.cm.tab20.colors[:len(chart_df)]
+                color=plt.cm.tab20.colors[:len(sales_df)]
             )
             ax.set_ylabel("Sales Amount")
             st.pyplot(fig)
