@@ -17,6 +17,8 @@ RUN echo "deb http://deb.debian.org/debian bookworm main contrib non-free" > /et
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 COPY . .
+RUN useradd -m appuser
+USER appuser
 RUN mkdir -p Files Bulk_Import reports logs tests
 EXPOSE 8501
 CMD ["streamlit", "run", "restaurantapp_st_cloud.py", "--server.port=8501", "--server.address=0.0.0.0", "--server.headless=true"]
